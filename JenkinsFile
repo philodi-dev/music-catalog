@@ -45,23 +45,23 @@ pipeline{
             }
         }
 
-//         stage('OWASP Dependency-Check Vulnerabilities') {
-//             steps {
-//                 dependencyCheck additionalArguments: '''
-//                             -o './'
-//                             -s './'
-//                             -f 'ALL'
-//                             --prettyPrint''', odcInstallation: 'owasp-dp-check'
-//
-//                 dependencyCheckPublisher pattern: 'dependency-check-report.xml'
-//             }
-//         }
+        stage('OWASP Dependency-Check Vulnerabilities') {
+            steps {
+                dependencyCheck additionalArguments: '''
+                            -o './'
+                            -s './'
+                            -f 'ALL'
+                            --prettyPrint''', odcInstallation: 'owasp-dp-check'
 
-//         stage("Build::Maven Build Application"){
-//             steps {
-//                 sh "mvn clean package"
-//             }
-//         }
+                dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+            }
+        }
+
+        stage("Build::Maven Build Application"){
+            steps {
+                sh "mvn clean package"
+            }
+        }
 
         // stage("Docker build"){
         //     steps {
