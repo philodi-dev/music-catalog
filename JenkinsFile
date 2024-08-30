@@ -1,0 +1,139 @@
+pipeline{
+    agent any
+    environment {
+        APP_NAME = "vitepay"
+        RELEASE = "dev-1.0"
+        DOCKER_USER = "sendmore"
+        DOCKER_PASS = 'dockerhub'
+        IMAGE_NAME = "${DOCKER_USER}" + "/" + "${APP_NAME}"
+        IMAGE_TAG = "${RELEASE}-${BUILD_NUMBER}"
+    }
+    stages{
+        stage("Cleanup Workspace"){
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage("Checkout from SCM"){
+            steps {
+                git branch: 'master', credentialsId: 'vitefait-git-dev', url: 'https://github.com/astechcongo/paypass-payment'
+            }
+        }
+
+        stage("Test::Maven Test"){
+            steps {
+                sh "cd payment-gateway && mvn test"
+            }
+        }
+
+        stage("SAST::Sonarqube Analysis") {
+            steps {
+                script {
+                    withSonarQubeEnv('SonarCloud') {
+                        sh "cd payment-gateway && mvn sonar:sonar"
+                    }
+                }
+            }
+        }
+
+        stage("SAST::Quality Gate Check") {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: true, credentialsId: 'sonar-token'
+                }
+            }
+        }
+
+//         stage('OWASP Dependency-Check Vulnerabilities') {
+//             steps {
+//                 dependencyCheck additionalArguments: '''
+//                             -o './'
+//                             -s './'
+//                             -f 'ALL'
+//                             --prettyPrint''', odcInstallation: 'owasp-dp-check'
+//
+//                 dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+//             }
+//         }
+
+//         stage("Build::Maven Build Application"){
+//             steps {
+//                 sh "mvn clean package"
+//             }
+//         }
+
+        // stage("Docker build"){
+        //     steps {
+        //         sh "docker build -t ${IMAGE_NAME} ."
+        //     }
+
+        // }
+
+        // stage("Docker tag"){
+        //     steps {
+        //         sh "docker tag ${IMAGE_NAME}:${IMAGE_TAG}"
+        //     }
+
+        // }
+
+        // stage("Build & Push Docker Image") {
+        //     steps {
+        //         script {
+        //             docker.withRegistry('',DOCKER_PASS) {
+        //                 docker_image = docker.build "${IMAGE_NAME}"
+        //             }
+
+        //             docker.withRegistry('',DOCKER_PASS) {
+        //                 docker_image.push("${IMAGE_TAG}")
+        //                 docker_image.push('latest')
+        //             }
+        //         }
+        //     }
+        // }
+
+        // stage("Trivy Scan") {
+        //     steps {
+        //         script {
+		//    sh ('docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image dmancloud/complete-prodcution-e2e-pipeline:1.0.0-22 --no-progress --scanners vuln  --exit-code 0 --severity HIGH,CRITICAL --format table')
+        //         }
+        //     }
+
+        // }
+
+        // stage ('Cleanup Artifacts') {
+        //     steps {
+        //         script {
+        //             sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG}"
+        //             sh "docker rmi ${IMAGE_NAME}:latest"
+        //         }
+        //     }
+        // }
+
+
+        // stage("Trigger CD Pipeline") {
+        //     steps {
+        //         script {
+        //             sh "curl -v -k --user admin:${JENKINS_API_TOKEN} -X POST -H 'cache-control: no-cache' -H 'content-type: application/x-www-form-urlencoded' --data 'IMAGE_TAG=${IMAGE_TAG}' 'https://automation.umojafunding.com/job/vitepay-staging-gitops/buildWithParameters?token=gitops-token'"
+        //         }
+        //     }
+
+        // }
+
+    }
+
+//     post {
+//         failure {
+//              emailext body: "${APP_NAME} - Build # ${BUILD_NUMBER} - Failed: Check console output at ${BUILD_URL} to view the results. This is an auto generated email. Don't reply",
+//                     subject: "${env.JOB_NAME} - Build # ${env.BUILD_NUMBER} - Failed",
+//                     to: "me@philodi.com"
+//         }
+//         success {
+//             emailext body: "${APP_NAME} - Build # ${BUILD_NUMBER} - Successful: Check console output here ${BUILD_URL} to view the results. This is an auto generated email. Don't reply",
+//                     subject: "${env.JOB_NAME} - Build # ${env.BUILD_NUMBER} - Successful",
+//                     to: "me@philodi.com"
+//         }
+//     }
+
+
+}
