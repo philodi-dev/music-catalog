@@ -17,7 +17,7 @@ pipeline{
 
         stage("Checkout from SCM"){
             steps {
-                git branch: 'master', credentialsId: 'vitefait-git-dev', url: 'https://github.com/philodi-dev/music-catalog.git'
+                git branch: 'main', url: 'https://github.com/philodi-dev/music-catalog.git'
             }
         }
 
